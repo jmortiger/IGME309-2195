@@ -16,6 +16,18 @@ void MyMesh::GenerateCircle(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 		Calculate a_nSubdivisions number of points around a center point in a radial manner
 		then call the AddTri function to generate a_nSubdivision number of faces
 	*/
+	glm::vec3 
+		cenPoint = glm::vec3(0.0f, 0.0f, 0.0f),
+		firPoint = glm::vec3(0.0f, 0.0f, a_fRadius),
+		secPoint = glm::vec3(firPoint.x, firPoint.y, firPoint.z);
+	float radsPerTri = glm::radians(360.0f / a_nSubdivisions);
+	glm::vec3 ang()
+	glm::quat dearGod = glm::quat();
+	secPoint = cenPoint + ()
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
