@@ -18,15 +18,26 @@ void MyMesh::GenerateCircle(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 	*/
 	glm::vec3 
 		cenPoint = glm::vec3(0.0f, 0.0f, 0.0f),
-		firPoint = glm::vec3(0.0f, 0.0f, a_fRadius),
-		secPoint = glm::vec3(firPoint.x, firPoint.y, firPoint.z);
-	float radsPerTri = glm::radians(360.0f / a_nSubdivisions);
-	glm::vec3 ang()
-	glm::quat dearGod = glm::quat();
-	secPoint = cenPoint + ()
+		firPoint = glm::vec3(a_fRadius, 0.0f, 0.0f),
+		secPoint = glm::vec3(firPoint.x, firPoint.y, firPoint.z),
+		origFirPoint = glm::vec3(firPoint.x, firPoint.y, firPoint.z);
+	float degPerTri = 360.0f / a_nSubdivisions, radsPerTri = glm::radians(degPerTri);
+	glm::quat dearGod = glm::quat(glm::vec3(0.0f, 0.0f, radsPerTri));
+	//secPoint = cenPoint + (dearGod * (firPoint));
+	//std::vector<glm::vec3> tris();
 	for (int i = 0; i < a_nSubdivisions; i++)
 	{
-
+		// Shift the outer points to the next vertex
+		// 1. Set the 1st p to the 2nd p
+		firPoint = glm::vec3(secPoint.x, secPoint.y, secPoint.z);
+		// 2A. Check if this is the last tri, then set the 2nd p to the original 1st p (to account for rounding errors)
+		if (!(i + 1 < a_nSubdivisions))
+			secPoint = origFirPoint;
+		// 2B. If not, rotate the 2nd p to the next vertex
+		else
+			secPoint = cenPoint + (dearGod * (secPoint));
+		// 3. Add the new tri
+		AddTri(cenPoint, firPoint, secPoint);
 	}
 
 	// Adding information about color
@@ -187,8 +198,8 @@ void MyMesh::AddTri(vector3 a_vBottomLeft, vector3 a_vBottomRight, vector3 a_vTo
 {
 	//C
 	//| \
-		//A--B
-//This will make the triangle A->B->C 
+	//A--B
+	//This will make the triangle A->B->C 
 	AddVertexPosition(a_vBottomLeft);
 	AddVertexPosition(a_vBottomRight);
 	AddVertexPosition(a_vTopLeft);
