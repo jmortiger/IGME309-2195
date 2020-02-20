@@ -62,16 +62,11 @@ void Application::Display(void)
 		break;
 	case 4:// Done
 		m_pCamera->ResetCamera();
-		//m_pCamera->SetNearFar(Simplex::vector2(1000.0f, 0.001f));
-		//m_pCamera->SetPerspective(false);
 		m_pCamera->SetPosition(AXIS_Z * -15.0f);
 		m_pCamera->SetTarget(ZERO_V3);
 		break;
 	case 5:// Done
 		m_pCamera->ResetCamera();
-		//m_pCamera->SetNearFar(Simplex::vector2(19.0f, 0.001f));
-		//m_pCamera->SetFOV(-45.0f);
-		//m_pCamera->SetFOV(45.0f);
 		m_pCamera->SetPosition(AXIS_Z * -15.0f);
 		m_pCamera->SetTarget(ZERO_V3);
 		m_pCamera->SetNearFar(Simplex::vector2(5.001f, 1000.0f));
