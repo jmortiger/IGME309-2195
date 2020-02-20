@@ -49,33 +49,42 @@ void Application::Display(void)
 	switch (m_uProjection)
 	{
 	default:
-	case 1:
+	case 1:// Done
 		m_pCamera->ResetCamera();
 		break;
-	case 2:
+	case 2:// Done
 		m_pCamera->ResetCamera();
 		m_pCamera->SetPerspective(false);
 		break;
-	case 3:
+	case 3:// Done
 		m_pCamera->ResetCamera();
+		m_pCamera->SetPositionTargetAndUpward(AXIS_X * 20.0f, vector3(0.0f, 0.0f, -5.0f), AXIS_Z * -1);
 		break;
-	case 4:
+	case 4:// Done
 		m_pCamera->ResetCamera();
-		m_pCamera->SetNearFar(Simplex::vector2(1000.0f, 0.001f));
+		//m_pCamera->SetNearFar(Simplex::vector2(1000.0f, 0.001f));
 		//m_pCamera->SetPerspective(false);
-		//m_pCamera->
+		m_pCamera->SetPosition(AXIS_Z * -15.0f);
+		m_pCamera->SetTarget(ZERO_V3);
 		break;
-	case 5:
+	case 5:// Done
 		m_pCamera->ResetCamera();
-		m_pCamera->SetNearFar(Simplex::vector2(19.0f, 0.001f));
+		//m_pCamera->SetNearFar(Simplex::vector2(19.0f, 0.001f));
 		//m_pCamera->SetFOV(-45.0f);
-		m_pCamera->SetFOV(45.0f);
+		//m_pCamera->SetFOV(45.0f);
+		m_pCamera->SetPosition(AXIS_Z * -15.0f);
+		m_pCamera->SetTarget(ZERO_V3);
+		m_pCamera->SetNearFar(Simplex::vector2(5.001f, 1000.0f));
 		break;
-	case 6:
+	case 6:// Done
 		m_pCamera->ResetCamera();
+		m_pCamera->SetPosition(AXIS_Z * -15.0f);
+		m_pCamera->SetTarget(ZERO_V3);
+		m_pCamera->SetNearFar(Simplex::vector2(0.001f, 14.0f));
 		break;
-	case 7:
+	case 7:// Done
 		m_pCamera->ResetCamera();
+		m_pCamera->SetUp(AXIS_Y * -1.0f);
 		break;
 	}
 
