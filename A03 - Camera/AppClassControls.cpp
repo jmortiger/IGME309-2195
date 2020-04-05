@@ -369,6 +369,39 @@ void Application::CameraRotation(float a_fSpeed)
 		fAngleX += fDeltaMouse * a_fSpeed;
 	}
 	//Change the Yaw and the Pitch of the camera
+	vector3 newPos = m_pCamera->GetPosition();
+	vector3 newTar = m_pCamera->GetTarget();
+	vector3 newAbo = m_pCamera->GetAbove();
+	vector3 right = glm::cross(glm::normalize(newTar - newPos), glm::normalize(newAbo - newPos));
+	/*static quaternion camQuat = glm::angleAxis(0.0f, glm::normalize(newTar - newPos));
+	camQuat = glm::angleAxis()*/
+
+#pragma region AngleSolution (Kinda Works)
+	// KINDOF WORKS
+	// Left/Right: Uses fAngleY, Problems w/ Method
+	newTar = glm::rotateY((newTar - newPos), fAngleY) + newPos;
+	// Up/Down: Uses fAngleX, All good
+	newTar = glm::rotateX((newTar - newPos), -1 * fAngleX) + newPos;
+	// Up/Down: Uses fAngleX, All good
+	newAbo = glm::rotateX((newAbo - newPos), -1 * fAngleX) + newPos;
+#pragma endregion
+
+
+#pragma region Quat Solution (In Progress)
+	/*quaternion camQuatLR = glm::angleAxis(fAngleY, glm::normalize(newAbo - newPos));
+	quaternion camQuatUD = glm::angleAxis(fAngleX, glm::normalize(right));
+
+	quaternion camQuatComb = camQuatUD * camQuatLR;
+
+	newTar = camQuatComb * newTar;
+	newAbo = camQuatUD * newAbo;*/
+#pragma endregion
+
+
+	//m_pCamera->SetPositionTargetAndUpward(newPos, newTar, newAbo); // THIS SETS ABOVE IN A WAY THAT SCREWS EVERYTHING UP; DON'T USE
+	m_pCamera->SetPosition(newPos);
+	m_pCamera->SetTarget(newTar);
+	m_pCamera->SetAbove(newAbo);
 	SetCursorPos(CenterX, CenterY);//Position the mouse in the center
 }
 //Keyboard
@@ -390,6 +423,13 @@ void Application::ProcessKeyboard(void)
 		m_pCamera->MoveForward(fSpeed);
 	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		m_pCamera->MoveForward(-fSpeed);
+
+	// I think I'm supposed to edit this for the proj, not sure
+	// Added left and right movement
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+		m_pCamera->MoveSideways(fSpeed);
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+		m_pCamera->MoveSideways(-fSpeed);
 #pragma endregion
 }
 //Joystick

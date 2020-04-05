@@ -153,10 +153,31 @@ void Simplex::MyCamera::CalculateProjectionMatrix(void)
 void MyCamera::MoveForward(float a_fDistance)
 {
 	//The following is just an example and does not take in account the forward vector (AKA view vector)
-	m_v3Position += vector3(0.0f, 0.0f,-a_fDistance);
+	/*m_v3Position += vector3(0.0f, 0.0f,-a_fDistance);
 	m_v3Target += vector3(0.0f, 0.0f, -a_fDistance);
-	m_v3Above += vector3(0.0f, 0.0f, -a_fDistance);
+	m_v3Above += vector3(0.0f, 0.0f, -a_fDistance);*/
+	vector3 delta = glm::normalize(m_v3Target - m_v3Position); // Direction
+	delta *= a_fDistance; // Magnitude
+	m_v3Position += delta;
+	m_v3Target	 += delta;
+	m_v3Above	 += delta;
 }
 
-void MyCamera::MoveVertical(float a_fDistance){}//Needs to be defined
-void MyCamera::MoveSideways(float a_fDistance){}//Needs to be defined
+void MyCamera::MoveVertical(float a_fDistance)//Needs to be defined
+{
+	vector3 delta = glm::normalize(m_v3Above - m_v3Position); // Direction
+	delta *= a_fDistance; // Magnitude
+	m_v3Position += delta;
+	m_v3Target += delta;
+	m_v3Above += delta;
+}
+void MyCamera::MoveSideways(float a_fDistance)//Needs to be defined
+{
+	// Try to get the right vector using cross product of the forward and the up
+	vector3 right = glm::cross(glm::normalize(m_v3Target - m_v3Position), glm::normalize(m_v3Above - m_v3Position));
+	//vector3 delta = glm::normalize(m_v3Target - m_v3Position); // Direction
+	right *= a_fDistance; // Magnitude
+	m_v3Position += right;
+	m_v3Target += right;
+	m_v3Above += right;
+}
