@@ -39,3 +39,4 @@ Z_DELETE
 *.db
 .vs/
 _Binary/*_d.ini
+/include/glm/out/build/x64-Debug
