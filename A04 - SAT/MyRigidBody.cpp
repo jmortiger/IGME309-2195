@@ -4,9 +4,9 @@ using namespace Simplex;
 void MyRigidBody::Init(void)
 {
 	m_pMeshMngr = MeshManager::GetInstance();
-	m_bVisibleBS = false;
+	m_bVisibleBS = true;
 	m_bVisibleOBB = true;
-	m_bVisibleARBB = false;
+	m_bVisibleARBB = true;
 
 	m_fRadius = 0.0f;
 
@@ -286,6 +286,462 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	Simplex that might help you [eSATResults] feel free to use it.
 	(eSATResults::SAT_NONE has a value of 0)
 	*/
+
+#pragma region a.u setup
+	vector3 myX = vector3(this->m_v3MaxL.x - this->m_v3Center.x, 0, 0);
+	//std::cout << "" << myX.x << " " << myX.y << " " << myX.z << std::endl;
+	vector3 myY/* = vector3(0, this->m_v3MaxL.y - this->m_v3Center.y, 0)*/;
+	vector3 myZ/* = vector3(0, 0, this->m_v3MaxL.z - this->m_v3Center.z)*/;
+	vector4 myX4 = vector4(this->m_v3MaxL.x - this->m_v3Center.x, 0, 0, 1);
+	vector4 myY4 = vector4(0, this->m_v3MaxL.y - this->m_v3Center.y, 0, 1);
+	vector4 myZ4 = vector4(0, 0, this->m_v3MaxL.z - this->m_v3Center.z, 1);
+	myX = this->m_m4ToWorld * myX4;
+	myY = this->m_m4ToWorld * myY4;
+	myZ = this->m_m4ToWorld * myZ4;
+	myX = vector3(this->m_m4ToWorld[0][0], this->m_m4ToWorld[0][1], this->m_m4ToWorld[0][2]);
+	myY = vector3(this->m_m4ToWorld[1][0], this->m_m4ToWorld[1][1], this->m_m4ToWorld[1][2]);
+	myZ = vector3(this->m_m4ToWorld[2][0], this->m_m4ToWorld[2][1], this->m_m4ToWorld[2][2]);
+	myX = this->m_m4ToWorld * vector4(1, 0, 0, 0);
+	myY = this->m_m4ToWorld * vector4(0, 1, 0, 0);
+	myZ = this->m_m4ToWorld * vector4(0, 0, 1, 0);
+	myX = this->m_m4ToWorld[0];
+	myY = this->m_m4ToWorld[1];
+	myZ = this->m_m4ToWorld[2];
+	vector3 au[3] = { myX, myY, myZ };
+	/*std::cout << "" << myX.x << " " << myX.y << " " << myX.z << std::endl;
+	std::cout << "" << myY.x << " " << myY.y << " " << myY.z << std::endl;
+	std::cout << "" << myZ.x << " " << myZ.y << " " << myZ.z << std::endl;
+	std::cout << "myTrans " << this->m_m4ToWorld[3][0] << " " << this->m_m4ToWorld[3][1] << " " << this->m_m4ToWorld[3][2] << std::endl;*/
+#pragma endregion
+	vector3 myTrans = vector3(this->m_m4ToWorld[3][0], this->m_m4ToWorld[3][1], this->m_m4ToWorld[3][2]);
+	vector4 myTrans4 = vector4(this->m_m4ToWorld[3][0], this->m_m4ToWorld[3][1], this->m_m4ToWorld[3][2], 1);
+#pragma region b.u setup
+	vector3 otX/* = vector3(a_pOther->m_v3MaxL.x - a_pOther->m_v3Center.x, 0, 0)*/;
+	vector3 otY/* = vector3(0, a_pOther->m_v3MaxL.y - a_pOther->m_v3Center.y, 0)*/;
+	vector3 otZ/* = vector3(0, 0, a_pOther->m_v3MaxL.z - a_pOther->m_v3Center.z)*/;
+
+	vector4 otX4 = vector4(a_pOther->m_v3MaxL.x - a_pOther->m_v3Center.x, 0, 0, 1);
+	vector4 otY4 = vector4(0, a_pOther->m_v3MaxL.y - a_pOther->m_v3Center.y, 0, 1);
+	vector4 otZ4 = vector4(0, 0, a_pOther->m_v3MaxL.z - a_pOther->m_v3Center.z, 1);
+	otX = a_pOther->m_m4ToWorld * otX4;
+	otY = a_pOther->m_m4ToWorld * otY4;
+	otZ = a_pOther->m_m4ToWorld * otZ4;
+	otX = vector3(a_pOther->m_m4ToWorld[0][0], a_pOther->m_m4ToWorld[0][1], a_pOther->m_m4ToWorld[0][2]);
+	otY = vector3(a_pOther->m_m4ToWorld[1][0], a_pOther->m_m4ToWorld[1][1], a_pOther->m_m4ToWorld[1][2]);
+	otZ = vector3(a_pOther->m_m4ToWorld[2][0], a_pOther->m_m4ToWorld[2][1], a_pOther->m_m4ToWorld[2][2]);
+	otX = a_pOther->m_m4ToWorld * vector4(1, 0, 0, 0);
+	otY = a_pOther->m_m4ToWorld * vector4(0, 1, 0, 0);
+	otZ = a_pOther->m_m4ToWorld * vector4(0, 0, 1, 0);
+	vector3 bu[3] = { otX, otY, otZ };
+	/*std::cout << "" << otX.x << " " << otX.y << " " << otX.z << std::endl;
+	std::cout << "" << otY.x << " " << otY.y << " " << otY.z << std::endl;
+	std::cout << "" << otZ.x << " " << otZ.y << " " << otZ.z << std::endl;
+	std::cout << "otTrans " << this->m_m4ToWorld[3][0] << " " << this->m_m4ToWorld[3][1] << " " << this->m_m4ToWorld[3][2] << std::endl;*/
+#pragma endregion
+
+	vector3 ac = this->GetCenterGlobal();
+	vector3 bc = a_pOther->GetCenterGlobal();
+	vector3 ae = this->m_v3HalfWidth;
+	vector3 be = a_pOther->m_v3HalfWidth;
+#pragma region Old
+	/*
+	//OBB a, OBB b
+		float ra, rb;
+		matrix3 R, AbsR;
+
+		// Compute rotation matrix expressing b in a's coordinate frame
+		for (int i = 0; i < 3; i++)
+			for (int j = 0; j < 3; j++)
+				//R[i][j] = glm::dot(a.u[i], b.u[j]);
+				R[i][j] = glm::dot(au[i], bu[j]);
+
+		// Compute translation vector t
+		//vector3 t = b.c - a.c;
+		vector3 t = a_pOther->GetCenterGlobal() - this->GetCenterGlobal();
+		// Bring translation into a's coordinate frame
+		//t = Vector(Dot(t, a.u[0]), Dot(t, a.u[2]), Dot(t, a.u[2]));
+		t = vector3(glm::dot(t, au[0]), glm::dot(t, au[1]), glm::dot(t, au[2]));
+
+		//std::cout << "" << t.x << " " << t.y << " " << t.z << std::endl;
+		// Compute common subexpressions. Add in an epsilon term to
+		// counteract arithmetic errors when two edges are parallel and
+		// their cross product is (near) null (see text for details)
+		for (int i = 0; i < 3; i++)
+			for (int j = 0; j < 3; j++)
+				//AbsR[i][j] = glm::abs(R[i][j]) + EPSILON;
+				AbsR[i][j] = glm::abs(R[i][j]) + glm::epsilon<float>();
+
+		// Test axes L = A0, L = A1, L = A2
+		for (int i = 0; i < 3; i++) {
+			//ra = a.e[i];
+			switch (i)
+			{
+			case 0:
+				ra = this->m_v3HalfWidth.x;
+				break;
+			case 1:
+				ra = this->m_v3HalfWidth.y;
+				break;
+			case 2:
+				ra = this->m_v3HalfWidth.z;
+				break;
+			default:
+				throw std::exception();
+				break;
+			}
+			//rb = b.e[0] * AbsR[i][0] + b.e[1] * AbsR[i][1] + b.e[2] * AbsR[i][2];
+			rb = a_pOther->m_v3HalfWidth.x * AbsR[i][0] + a_pOther->m_v3HalfWidth.y * AbsR[i][1] + a_pOther->m_v3HalfWidth.z * AbsR[i][2];
+			if (glm::abs(t[i]) > ra + rb) {
+				switch (i)
+				{
+				case 0:
+					std::cout << "SAT_AX" << std::endl;
+					return eSATResults::SAT_AX;
+					break;
+				case 1:
+					std::cout << "SAT_AY" << std::endl;
+					return eSATResults::SAT_AY;
+					break;
+				case 2:
+					std::cout << "SAT_AZ" << std::endl;
+					return eSATResults::SAT_AZ;
+					break;
+				default:
+					throw std::exception();
+					break;
+				}
+			}
+		}
+
+		// Test axes L = B0, L = B1, L = B2
+		for (int i = 0; i < 3; i++) {
+			//ra = a.e[0] * AbsR[0][i] + a.e[1] * AbsR[1][i] + a.e[2] * AbsR[2][i];
+			ra = this->m_v3HalfWidth.x * AbsR[0][i] + this->m_v3HalfWidth.x * AbsR[1][i] + this->m_v3HalfWidth.x * AbsR[2][i];
+			//rb = b.e[i];
+			switch (i)
+			{
+			case 0:
+				rb = a_pOther->m_v3HalfWidth.x;
+				break;
+			case 1:
+				rb = a_pOther->m_v3HalfWidth.y;
+				break;
+			case 2:
+				rb = a_pOther->m_v3HalfWidth.z;
+				break;
+			default:
+				throw std::exception();
+				break;
+			}
+			if (glm::abs(t[0] * R[0][i] + t[1] * R[1][i] + t[2] * R[2][i]) > ra + rb) {
+				switch (i)
+				{
+				case 0:
+					std::cout << "SAT_BX" << std::endl;
+					return eSATResults::SAT_BX;
+					break;
+				case 1:
+					std::cout << "SAT_BY" << std::endl;
+					return eSATResults::SAT_BY;
+					break;
+				case 2:
+					std::cout << "SAT_BZ" << std::endl;
+					//this->m_pMeshMngr->AddPlaneToRenderList((glm::mat4)(glm::rotation(vector3(1, 1, 1), vector3(R[0][i], R[1][i], R[2][i]))), vector3(1,1,1));
+					return eSATResults::SAT_BZ;
+					break;
+				default:
+					throw std::exception();
+					break;
+				}
+			}
+		}
+
+		// Test axis L = A0 x B0
+		//ra = a.e[1] * AbsR[2][0] + a.e[2] * AbsR[1][0];
+		//rb = b.e[1] * AbsR[0][2] + b.e[2] * AbsR[0][1];
+		ra = this->m_v3HalfWidth.y * AbsR[2][0] + this->m_v3HalfWidth.z * AbsR[1][0];
+		rb = a_pOther->m_v3HalfWidth.y * AbsR[0][2] + a_pOther->m_v3HalfWidth.z * AbsR[0][1];
+		if (glm::abs(t[2] * R[1][0] - t[1] * R[2][0]) > ra + rb) return eSATResults::SAT_AXxBX;
+
+		// Test axis L = A0 x B1
+		//ra = a.e[1] * AbsR[2][1] + a.e[2] * AbsR[1][1];
+		//rb = b.e[0] * AbsR[0][2] + b.e[2] * AbsR[0][0];
+		ra = this->m_v3HalfWidth.y * AbsR[2][1] + this->m_v3HalfWidth.z * AbsR[1][1];
+		rb = a_pOther->m_v3HalfWidth.x * AbsR[0][2] + a_pOther->m_v3HalfWidth.z * AbsR[0][0];
+		if (glm::abs(t[2] * R[1][1] - t[1] * R[2][1]) > ra + rb) return eSATResults::SAT_AXxBY;
+
+		// Test axis L = A0 x B2
+		ra = this->m_v3HalfWidth.y * AbsR[2][2] + this->m_v3HalfWidth.z * AbsR[1][2];
+		rb = a_pOther->m_v3HalfWidth.x * AbsR[0][1] + a_pOther->m_v3HalfWidth.y * AbsR[0][0];
+		if (glm::abs(t[2] * R[1][2] - t[1] * R[2][2]) > ra + rb) return eSATResults::SAT_AXxBZ;
+
+		// Test axis L = A1 x B0
+		ra = this->m_v3HalfWidth.x * AbsR[2][0] + this->m_v3HalfWidth.z * AbsR[0][0];
+		rb = a_pOther->m_v3HalfWidth.y * AbsR[1][2] + a_pOther->m_v3HalfWidth.z * AbsR[1][1];
+		if (glm::abs(t[0] * R[2][0] - t[2] * R[0][0]) > ra + rb) return eSATResults::SAT_AYxBX;
+
+		// Test axis L = A1 x B1
+		ra = this->m_v3HalfWidth.x * AbsR[2][1] + this->m_v3HalfWidth.z * AbsR[0][1];
+		rb = a_pOther->m_v3HalfWidth.x * AbsR[1][2] + a_pOther->m_v3HalfWidth.z * AbsR[1][0];
+		if (glm::abs(t[0] * R[2][1] - t[2] * R[0][1]) > ra + rb) return eSATResults::SAT_AYxBY;
+
+		// Test axis L = A1 x B2
+		ra = this->m_v3HalfWidth.x * AbsR[2][2] + this->m_v3HalfWidth.z * AbsR[0][2];
+		rb = a_pOther->m_v3HalfWidth.x * AbsR[1][1] + a_pOther->m_v3HalfWidth.y * AbsR[1][0];
+		if (glm::abs(t[0] * R[2][2] - t[2] * R[0][2]) > ra + rb) return eSATResults::SAT_AYxBZ;
+
+		// Test axis L = A2 x B0
+		ra = this->m_v3HalfWidth.x * AbsR[1][0] + this->m_v3HalfWidth.y * AbsR[0][0];
+		rb = a_pOther->m_v3HalfWidth.y * AbsR[2][2] + a_pOther->m_v3HalfWidth.z * AbsR[2][1];
+		if (glm::abs(t[1] * R[0][0] - t[0] * R[1][0]) > ra + rb) return eSATResults::SAT_AZxBX;
+
+		// Test axis L = A2 x B1
+		ra = this->m_v3HalfWidth.x * AbsR[1][1] + this->m_v3HalfWidth.y * AbsR[0][1];
+		rb = a_pOther->m_v3HalfWidth.x * AbsR[2][2] + a_pOther->m_v3HalfWidth.z * AbsR[2][0];
+		if (glm::abs(t[1] * R[0][1] - t[0] * R[1][1]) > ra + rb) return eSATResults::SAT_AZxBY;
+
+		// Test axis L = A2 x B2
+		ra = this->m_v3HalfWidth.x * AbsR[1][2] + this->m_v3HalfWidth.y * AbsR[0][2];
+		rb = a_pOther->m_v3HalfWidth.x * AbsR[2][1] + a_pOther->m_v3HalfWidth.y * AbsR[2][0];
+		if (glm::abs(t[1] * R[0][2] - t[0] * R[1][2]) > ra + rb) return eSATResults::SAT_AZxBZ;
+
+		// Since no separating axis is found, the OBBs must be intersecting
+		return eSATResults::SAT_NONE;*/
+#pragma endregion
+	do {
+#pragma region Directly from book
+			//float ra, rb;
+			//Matrix33 R, AbsR;
+
+			//// Compute rotation matrix expressing b in a's coordinate frame
+			//for (int i = 0; i < 3; i++)
+			//	for (int j = 0; j < 3; j++)
+			//		R[i][j] = Dot(a.u[i], b.u[j]);
+
+			//// Compute translation vector t
+			//Vector t = b.c - a.c;
+			//// Bring translation into a's coordinate frame
+			//t = Vector(Dot(t, a.u[0]), Dot(t, a.u[2]), Dot(t, a.u[2]));
+
+			//// Compute common subexpressions. Add in an epsilon term to
+			//// counteract arithmetic errors when two edges are parallel and
+			//// their cross product is (near) null (see text for details)
+			//for (int i = 0; i < 3; i++)
+			//	for (int j = 0; j < 3; j++)
+			//		AbsR[i][j] = Abs(R[i][j]) + EPSILON;
+
+			//// Test axes L = A0, L = A1, L = A2
+			//for (int i = 0; i < 3; i++) {
+			//	ra = a.e[i];
+			//	rb = b.e[0] * AbsR[i][0] + b.e[1] * AbsR[i][1] + b.e[2] * AbsR[i][2];
+			//	if (Abs(t[i]) > ra + rb) return 0;
+			//}
+
+			//// Test axes L = B0, L = B1, L = B2
+			//for (int i = 0; i < 3; i++) {
+			//	ra = a.e[0] * AbsR[0][i] + a.e[1] * AbsR[1][i] + a.e[2] * AbsR[2][i];
+			//	rb = b.e[i];
+			//	if (Abs(t[0] * R[0][i] + t[1] * R[1][i] + t[2] * R[2][i]) > ra + rb) return 0;
+			//}
+
+			//// Test axis L = A0 x B0
+			//ra = a.e[1] * AbsR[2][0] + a.e[2] * AbsR[1][0];
+			//rb = b.e[1] * AbsR[0][2] + b.e[2] * AbsR[0][1];
+			//if (Abs(t[2] * R[1][0] - t[1] * R[2][0]) > ra + rb) return 0;
+
+			//// Test axis L = A0 x B1
+			//ra = a.e[1] * AbsR[2][1] + a.e[2] * AbsR[1][1];
+			//rb = b.e[0] * AbsR[0][2] + b.e[2] * AbsR[0][0];
+			//if (Abs(t[2] * R[1][1] - t[1] * R[2][1]) > ra + rb) return 0;
+
+			//// Test axis L = A0 x B2
+			//ra = a.e[1] * AbsR[2][2] + a.e[2] * AbsR[1][2];
+			//rb = b.e[0] * AbsR[0][1] + b.e[1] * AbsR[0][0];
+			//if (Abs(t[2] * R[1][2] - t[1] * R[2][2]) > ra + rb) return 0;
+
+			//// Test axis L = A1 x B0
+			//ra = a.e[0] * AbsR[2][0] + a.e[2] * AbsR[0][0];
+			//rb = b.e[1] * AbsR[1][2] + b.e[2] * AbsR[1][1];
+
+			//if (Abs(t[0] * R[2][0] - t[2] * R[0][0]) > ra + rb) return 0;
+
+			//// Test axis L = A1 x B1
+			//ra = a.e[0] * AbsR[2][1] + a.e[2] * AbsR[0][1];
+			//rb = b.e[0] * AbsR[1][2] + b.e[2] * AbsR[1][0];
+			//if (Abs(t[0] * R[2][1] - t[2] * R[0][1]) > ra + rb) return 0;
+
+			//// Test axis L = A1 x B2
+			//ra = a.e[0] * AbsR[2][2] + a.e[2] * AbsR[0][2];
+			//rb = b.e[0] * AbsR[1][1] + b.e[1] * AbsR[1][0];
+			//if (Abs(t[0] * R[2][2] - t[2] * R[0][2]) > ra + rb) return 0;
+
+			//// Test axis L = A2 x B0
+			//ra = a.e[0] * AbsR[1][0] + a.e[1] * AbsR[0][0];
+			//rb = b.e[1] * AbsR[2][2] + b.e[2] * AbsR[2][1];
+			//if (Abs(t[1] * R[0][0] - t[0] * R[1][0]) > ra + rb) return 0;
+
+			//// Test axis L = A2 x B1
+			//ra = a.e[0] * AbsR[1][1] + a.e[1] * AbsR[0][1];
+			//rb = b.e[0] * AbsR[2][2] + b.e[2] * AbsR[2][0];
+			//if (Abs(t[1] * R[0][1] - t[0] * R[1][1]) > ra + rb) return 0;
+
+			//// Test axis L = A2 x B2
+			//ra = a.e[0] * AbsR[1][2] + a.e[1] * AbsR[0][2];
+			//rb = b.e[0] * AbsR[2][1] + b.e[1] * AbsR[2][0];
+			//if (Abs(t[1] * R[0][2] - t[0] * R[1][2]) > ra + rb) return 0;
+
+			//// Since no separating axis is found, the OBBs must be intersecting
+			//return 1;
+#pragma endregion
+			float ra, rb;
+			matrix3 R, AbsR;//Matrix33 R, AbsR;
+
+			// Compute rotation matrix expressing b in a's coordinate frame
+			for (int i = 0; i < 3; i++)
+				for (int j = 0; j < 3; j++)
+					R[i][j] = glm::dot(au[i], bu[j]);//		R[i][j] = Dot(a.u[i], b.u[j]);
+
+			// Compute translation vector t
+			vector3 t = bc - ac;//Vector t = b.c - a.c;
+			// Bring translation into a's coordinate frame
+			t = vector3(glm::dot(t, au[0]), glm::dot(t, au[1]), glm::dot(t, au[2]));//t = Vector(Dot(t, a.u[0]), Dot(t, a.u[2]), Dot(t, a.u[2]));
+
+			// Compute common subexpressions. Add in an epsilon term to
+			// counteract arithmetic errors when two edges are parallel and
+			// their cross product is (near) null (see text for details)
+			for (int i = 0; i < 3; i++)
+				for (int j = 0; j < 3; j++)
+					AbsR[i][j] = glm::abs(R[i][j]) + glm::epsilon<float>();//		AbsR[i][j] = Abs(R[i][j]) + EPSILON;
+
+			// Test axes L = A0, L = A1, L = A2
+			for (int i = 0; i < 3; i++) {
+				ra = ae[i];
+				rb = be[0] * AbsR[i][0] + be[1] * AbsR[i][1] + be[2] * AbsR[i][2];
+				if (glm::abs(t[i]) > ra + rb) {
+					glm::mat4 temp = (glm::mat4)(glm::rotation(vector3(1, 1, 1), vector3(au[i])));
+					switch (i)
+					{
+					case 0:
+						std::cout << "SAT_AX" << std::endl;
+						temp = (glm::mat4)(glm::rotation(vector3(1, 1, 1), vector3(au[i])));
+						temp[3] = myTrans4;
+						this->m_pMeshMngr->AddPlaneToRenderList(temp, vector3(1, 1, 1));
+						return eSATResults::SAT_AX;
+						break;
+					case 1:
+						std::cout << "SAT_AY" << std::endl;
+						temp = (glm::mat4)(glm::rotation(vector3(1, 1, 1), vector3(au[i])));
+						temp[3] = myTrans4;
+						this->m_pMeshMngr->AddPlaneToRenderList(temp, vector3(1, 1, 1));
+						return eSATResults::SAT_AY;
+						break;
+					case 2:
+						std::cout << "SAT_AZ" << std::endl;
+						temp = (glm::mat4)(glm::rotation(vector3(1, 1, 1), vector3(au[i])));
+						temp[3] = myTrans4;
+						this->m_pMeshMngr->AddPlaneToRenderList(temp, vector3(1, 1, 1));
+						return eSATResults::SAT_AZ;
+						break;
+					default:
+						throw std::exception();
+						break;
+					}
+				}
+			}
+
+			// Test axes L = B0, L = B1, L = B2
+			for (int i = 0; i < 3; i++) {
+				ra = ae[0] * AbsR[0][i] + ae[1] * AbsR[1][i] + ae[2] * AbsR[2][i];
+				rb = be[i];
+				if (glm::abs(t[0] * R[0][i] + t[1] * R[1][i] + t[2] * R[2][i]) > ra + rb) {
+					glm::mat4 temp = (glm::mat4)(glm::rotation(vector3(1, 1, 1), vector3(R[0][i], R[1][i], R[2][i])));
+					switch (i)
+					{
+					case 0:
+						std::cout << "SAT_BX" << std::endl;
+						temp = (glm::mat4)(glm::rotation(vector3(1, 0, 0), vector3(R[0][i], R[1][i], R[2][i])));
+						temp[3] = myTrans4;
+						this->m_pMeshMngr->AddPlaneToRenderList(temp, vector3(1, 1, 1));
+						return eSATResults::SAT_BX;
+						break;
+					case 1:
+						std::cout << "SAT_BY" << std::endl;
+						temp = (glm::mat4)(glm::rotation(vector3(0, 1, 0), vector3(R[0][i], R[1][i], R[2][i])));
+						temp[3] = myTrans4;
+						this->m_pMeshMngr->AddPlaneToRenderList(temp, vector3(1, 1, 1));
+						return eSATResults::SAT_BY;
+						break;
+					case 2:
+						std::cout << "SAT_BZ" << std::endl;
+						temp = (glm::mat4)(glm::rotation(vector3(0, 0, 1), vector3(R[0][i], R[1][i], R[2][i])));
+						temp[3] = myTrans4;
+						this->m_pMeshMngr->AddPlaneToRenderList(temp, vector3(1, 1, 1));
+						return eSATResults::SAT_BZ;
+						break;
+					default:
+						throw std::exception();
+						break;
+					}
+				}
+			}
+
+#pragma region Edge Tests
+			// Test axis L = A0 x B0
+			ra = ae[1] * AbsR[2][0] + ae[2] * AbsR[1][0];
+			rb = be[1] * AbsR[0][2] + be[2] * AbsR[0][1];
+			if (glm::abs(t[2] * R[1][0] - t[1] * R[2][0]) > ra + rb) {
+				std::cout << "SAT_AXxBX" << std::endl;
+				return eSATResults::SAT_AXxBX;
+			}
+
+			// Test axis L = A0 x B1
+			ra = ae[1] * AbsR[2][1] + ae[2] * AbsR[1][1];
+			rb = be[0] * AbsR[0][2] + be[2] * AbsR[0][0];
+			if (glm::abs(t[2] * R[1][1] - t[1] * R[2][1]) > ra + rb) {
+				std::cout << "SAT_AXxBY" << std::endl;
+				return eSATResults::SAT_AXxBY;
+			}
+
+			// Test axis L = A0 x B2
+			ra = ae[1] * AbsR[2][2] + ae[2] * AbsR[1][2];
+			rb = be[0] * AbsR[0][1] + be[1] * AbsR[0][0];
+			if (glm::abs(t[2] * R[1][2] - t[1] * R[2][2]) > ra + rb) return eSATResults::SAT_AXxBZ;
+
+			// Test axis L = A1 x B0
+			ra = ae[0] * AbsR[2][0] + ae[2] * AbsR[0][0];
+			rb = be[1] * AbsR[1][2] + be[2] * AbsR[1][1];
+
+			if (glm::abs(t[0] * R[2][0] - t[2] * R[0][0]) > ra + rb) return eSATResults::SAT_AYxBX;
+
+			// Test axis L = A1 x B1
+			ra = ae[0] * AbsR[2][1] + ae[2] * AbsR[0][1];
+			rb = be[0] * AbsR[1][2] + be[2] * AbsR[1][0];
+			if (glm::abs(t[0] * R[2][1] - t[2] * R[0][1]) > ra + rb) return eSATResults::SAT_AYxBY;
+
+			// Test axis L = A1 x B2
+			ra = ae[0] * AbsR[2][2] + ae[2] * AbsR[0][2];
+			rb = be[0] * AbsR[1][1] + be[1] * AbsR[1][0];
+			if (glm::abs(t[0] * R[2][2] - t[2] * R[0][2]) > ra + rb) return eSATResults::SAT_AYxBZ;
+
+			// Test axis L = A2 x B0
+			ra = ae[0] * AbsR[1][0] + ae[1] * AbsR[0][0];
+			rb = be[1] * AbsR[2][2] + be[2] * AbsR[2][1];
+			if (glm::abs(t[1] * R[0][0] - t[0] * R[1][0]) > ra + rb) return eSATResults::SAT_AZxBX;
+
+			// Test axis L = A2 x B1
+			ra = ae[0] * AbsR[1][1] + ae[1] * AbsR[0][1];
+			rb = be[0] * AbsR[2][2] + be[2] * AbsR[2][0];
+			if (glm::abs(t[1] * R[0][1] - t[0] * R[1][1]) > ra + rb) return eSATResults::SAT_AZxBY;
+
+			// Test axis L = A2 x B2
+			ra = ae[0] * AbsR[1][2] + ae[1] * AbsR[0][2];
+			rb = be[0] * AbsR[2][1] + be[1] * AbsR[2][0];
+			if (glm::abs(t[1] * R[0][2] - t[0] * R[1][2]) > ra + rb) return eSATResults::SAT_AZxBZ;
+#pragma endregion
+
+			// Since no separating axis is found, the OBBs must be intersecting
+			return eSATResults::SAT_NONE;
+	} while (false);
 
 	//there is no axis test that separates this two objects
 	return eSATResults::SAT_NONE;
